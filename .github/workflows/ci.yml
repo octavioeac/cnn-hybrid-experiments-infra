@@ -15,67 +15,115 @@ permissions:
   pull-requests: write
 
 env:
-  TF_WORKING_DIR: infra
   TF_BACKEND_BUCKET: tf-cnn-hybrid-experiments
-  TF_BACKEND_PREFIX: env/${{ github.ref_name }}
+  # si usas tfvars comunes:
+  TF_VARS_FILE: infra/envs/common.tfvars
 
 jobs:
   plan:
-    runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        tfdir:
+          - infra/foundation
+          - infra/experiments/cnn-fnn
+          - infra/experiments/cnn-mlp
+          - infra/experiments/cnn-mfcc
     steps:
       - uses: actions/checkout@v4
+
       - uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           token_format: 'access_token'
+
       - uses: hashicorp/setup-terraform@v3
-        with: { terraform_wrapper: false }
-      - name: Init
-        working-directory: ${{ env.TF_WORKING_DIR }}
+        with:
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        working-directory: ${{ matrix.tfdir }}
         run: |
-          terraform init \
+          terraform init -reconfigure \
             -backend-config="bucket=${{ env.TF_BACKEND_BUCKET }}" \
-            -backend-config="prefix=${{ env.TF_BACKEND_PREFIX }}"
-      - name: Validate
-        working-directory: ${{ env.TF_WORKING_DIR }}
+            -backend-config="prefix=${{ matrix.tfdir }}"
+
+      - name: Terraform Fmt
+        working-directory: ${{ matrix.tfdir }}
+        run: terraform fmt -check
+
+      - name: Terraform Validate
+        working-directory: ${{ matrix.tfdir }}
         run: terraform validate
-      - name: Plan
-        working-directory: ${{ env.TF_WORKING_DIR }}
+
+      - name: Terraform Plan
+        working-directory: ${{ matrix.tfdir }}
         run: |
-          terraform plan -out=tfplan
+          if [ -f "../../envs/common.tfvars" ]; then
+            terraform plan -input=false -out=tfplan -var-file=../../envs/common.tfvars
+          else
+            terraform plan -input=false -out=tfplan
+          fi
           terraform show -no-color tfplan > tfplan.txt
+
       - name: Comment plan
+        if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            const plan = fs.readFileSync('infra/tfplan.txt','utf8').slice(0, 60000);
-            await github.rest.issues.createComment({ ...context.repo, issue_number: context.issue.number, body: "### Plan\n```\n"+plan+"\n```" });
+            const p = `${process.env.GITHUB_WORKSPACE}/${{ matrix.tfdir }}/tfplan.txt`;
+            const body = fs.readFileSync(p,'utf8').slice(0, 60000);
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.issue.number,
+              body: `### Plan \`${{ matrix.tfdir }}\`\n\`\`\`hcl\n${body}\n\`\`\``
+            });
 
   apply:
-    runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    environment: { name: production }
+    runs-on: ubuntu-latest
+    environment: production
+    strategy:
+      matrix:
+        tfdir:
+          - infra/foundation
+          - infra/experiments/cnn-fnn
+          - infra/experiments/cnn-mlp
+          - infra/experiments/cnn-mfcc
     steps:
       - uses: actions/checkout@v4
+
       - uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           token_format: 'access_token'
+
       - uses: hashicorp/setup-terraform@v3
-        with: { terraform_wrapper: false }
-      - name: Init
-        working-directory: ${{ env.TF_WORKING_DIR }}
+        with:
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        working-directory: ${{ matrix.tfdir }}
         run: |
-          terraform init \
+          terraform init -reconfigure \
             -backend-config="bucket=${{ env.TF_BACKEND_BUCKET }}" \
-            -backend-config="prefix=env/prod"
-      - name: Plan (safety)
-        working-directory: ${{ env.TF_WORKING_DIR }}
-        run: terraform plan -out=tfplan
-      - name: Apply
-        working-directory: ${{ env.TF_WORKING_DIR }}
+            -backend-config="prefix=${{ matrix.tfdir }}/env/prod"
+
+      - name: Terraform Plan (safety)
+        working-directory: ${{ matrix.tfdir }}
+        run: |
+          if [ -f "../../envs/prod.tfvars" ]; then
+            terraform plan -input=false -out=tfplan -var-file=../../envs/prod.tfvars
+          elif [ -f "../../envs/common.tfvars" ]; then
+            terraform plan -input=false -out=tfplan -var-file=../../envs/common.tfvars
+          else
+            terraform plan -input=false -out=tfplan
+          fi
+
+      - name: Terraform Apply
+        working-directory: ${{ matrix.tfdir }}
         run: terraform apply -auto-approve tfplan
