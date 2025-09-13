@@ -2,12 +2,12 @@
 set -euo pipefail
 
 # ================== CONFIG ==================
-PROJECT_ID="airflow-vertexai-pipeline"
+PROJECT_ID="cnn-hybrid-experiments-infra"
 REGION="us-central1"
 BUCKET_STATE="tf-state-${PROJECT_ID}"
 POOL="github-oidc-pool"
 PROVIDER="github-oidc"
-REPO_FULL="octavioeac/airflow-vertexai-pipeline"
+REPO_FULL="octavioeac/cnn-hybrid-experiments-infra"
 BRANCH_REF="refs/heads/main"
 
 # SA: must be >= 6 chars
