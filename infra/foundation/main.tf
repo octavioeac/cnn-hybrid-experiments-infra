@@ -6,3 +6,4 @@ resource "google_storage_bucket" "datasets" {
   name     = local.bucket_name
   location = var.region
 }
+
