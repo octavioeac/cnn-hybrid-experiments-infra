@@ -88,18 +88,15 @@ gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
 gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
   --member="serviceAccount:${TF_CI_SA}" \
   --role="roles/iam.serviceAccountAdmin" >/dev/null
-
 # Habilitar servicios/APIs desde Terraform (serviceusage)
 gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
   --member="serviceAccount:${TF_CI_SA}" \
   --role="roles/serviceusage.serviceUsageAdmin" >/dev/null
-
 # (Opcional) Secret Manager si guardas claves/tokens
 gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
   --member="serviceAccount:${TF_CI_SA}" \
   --role="roles/secretmanager.admin" >/dev/null
-
-
+  
 echo "Roles applied."
 
 # ======== WORKLOAD IDENTITY FEDERATION ========
