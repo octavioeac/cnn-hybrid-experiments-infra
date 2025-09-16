@@ -64,7 +64,9 @@ gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
   --member="serviceAccount:${TF_CI_SA}" --role="roles/compute.networkAdmin" >/dev/null
 gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
   --member="serviceAccount:${TF_CI_SA}" --role="roles/iam.serviceAccountUser" >/dev/null
-
+gcloud projects add-iam-policy-binding "${PROJECT_ID}"\
+  --member="serviceAccount:${TF_CI_SA}" --role="roles/storage.admin" >/dev/null
+  
 echo "Roles applied."
 
 # ======== WORKLOAD IDENTITY FEDERATION ========
