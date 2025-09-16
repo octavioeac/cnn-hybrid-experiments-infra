@@ -15,9 +15,8 @@ permissions:
   pull-requests: write
 
 env:
-  TF_BACKEND_BUCKET: tf-cnn-hybrid-experiments
-  # si usas tfvars comunes:
-  TF_VARS_FILE: infra/envs/common.tfvars
+  TF_BACKEND_BUCKET: tf-state-cnn-hybrid-experiments-infra
+  TF_VARS_FILE_ABS: ${{ github.workspace }}/infra/envs/common.tfvars
 
 jobs:
   plan:
@@ -43,6 +42,9 @@ jobs:
         with:
           terraform_wrapper: false
 
+      - name: Sanity check backend bucket
+        run: gcloud storage buckets describe gs://${{ env.TF_BACKEND_BUCKET }} --format='value(name)'
+
       - name: Terraform Init
         working-directory: ${{ matrix.tfdir }}
         run: |
@@ -61,15 +63,14 @@ jobs:
       - name: Terraform Plan
         working-directory: ${{ matrix.tfdir }}
         run: |
-          if [ -f "../../envs/common.tfvars" ]; then
-            terraform plan -input=false -out=tfplan -var-file=../../envs/common.tfvars
+          if [ -f "${{ env.TF_VARS_FILE_ABS }}" ]; then
+            terraform plan -input=false -out=tfplan -var-file="${{ env.TF_VARS_FILE_ABS }}"
           else
             terraform plan -input=false -out=tfplan
           fi
           terraform show -no-color tfplan > tfplan.txt
 
       - name: Comment plan
-        if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
@@ -116,10 +117,8 @@ jobs:
       - name: Terraform Plan (safety)
         working-directory: ${{ matrix.tfdir }}
         run: |
-          if [ -f "../../envs/prod.tfvars" ]; then
-            terraform plan -input=false -out=tfplan -var-file=../../envs/prod.tfvars
-          elif [ -f "../../envs/common.tfvars" ]; then
-            terraform plan -input=false -out=tfplan -var-file=../../envs/common.tfvars
+          if [ -f "${{ env.TF_VARS_FILE_ABS }}" ]; then
+            terraform plan -input=false -out=tfplan -var-file="${{ env.TF_VARS_FILE_ABS }}"
           else
             terraform plan -input=false -out=tfplan
           fi

@@ -28,7 +28,13 @@ gcloud services enable \
   storage.googleapis.com \
   artifactregistry.googleapis.com \
   run.googleapis.com \
-  compute.googleapis.com
+  compute.googleapis.com \
+  bigquery.googleapis.com \
+  aiplatform.googleapis.com \
+  pubsub.googleapis.com \
+  logging.googleapis.com \
+  monitoring.googleapis.com \
+  secretmanager.googleapis.com \
 
 # ======== STATE BUCKET (create if missing) ========
 if ! gcloud storage buckets describe "gs://${BUCKET_STATE}" >/dev/null 2>&1; then
@@ -64,8 +70,32 @@ gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
   --member="serviceAccount:${TF_CI_SA}" --role="roles/compute.networkAdmin" >/dev/null
 gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
   --member="serviceAccount:${TF_CI_SA}" --role="roles/iam.serviceAccountUser" >/dev/null
-gcloud projects add-iam-policy-binding "${PROJECT_ID}"\
-  --member="serviceAccount:${TF_CI_SA}" --role="roles/storage.admin" >/dev/null
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+  --member="serviceAccount:${TF_CI_SA}" --role="roles/storage.admin" >/dev/null 
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+  --member="serviceAccount:${TF_CI_SA}" --role="roles/artifactregistry.admin" >/dev/null
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+  --member="serviceAccount:${TF_CI_SA}" --role="roles/bigquery.admin" >/dev/null
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+  --member="serviceAccount:${TF_CI_SA}" --role="roles/aiplatform.admin" >/dev/null
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+  --member="serviceAccount:${TF_CI_SA}" --role="roles/pubsub.admin" >/dev/null
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+  --member="serviceAccount:${TF_CI_SA}" --role="roles/logging.admin" >/dev/null
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+  --member="serviceAccount:${TF_CI_SA}" --role="roles/monitoring.admin" >/dev/null
+# IAM básico (crear/borrar Service Accounts y bindings)
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+  --member="serviceAccount:${TF_CI_SA}" \
+  --role="roles/iam.serviceAccountAdmin" >/dev/null
+# Habilitar servicios/APIs desde Terraform (serviceusage)
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+  --member="serviceAccount:${TF_CI_SA}" \
+  --role="roles/serviceusage.serviceUsageAdmin" >/dev/null
+# (Opcional) Secret Manager si guardas claves/tokens
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+  --member="serviceAccount:${TF_CI_SA}" \
+  --role="roles/secretmanager.admin" >/dev/null
   
 echo "Roles applied."
 
