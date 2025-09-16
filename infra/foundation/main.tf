@@ -51,7 +51,7 @@ resource "google_pubsub_subscription" "train_pull" {
 
 resource "google_vertex_ai_dataset" "placeholder" {
   project             = var.project_id
-  region            = var.region
+  region              = var.region
   display_name        = "placeholder-tables-dataset"
   metadata_schema_uri = "gs://google-cloud-aiplatform/schema/dataset/metadata/tables_1.0.0.yaml"
 }
