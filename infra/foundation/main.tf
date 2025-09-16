@@ -1,7 +1,7 @@
 locals {
   bucket_name              = "ml-datasets-${var.project_id}-${var.region}"
   registry_repository_name = "ml-experiments-${var.project_id}-${var.region}"
-  endpoint_name            = "endpoint_ml-${var.project_id}"
+  endpoint_name            = "endpoint-ml-${var.project_id}-${var.region}"
 }
 
 resource "google_storage_bucket" "datasets" {
