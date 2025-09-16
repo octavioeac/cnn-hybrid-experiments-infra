@@ -15,3 +15,4 @@ resource "google_artifact_registry_repository" "ml_experiments" {
   format        = "DOCKER" # porque lo usarás para imágenes Docker
 }
 
+
