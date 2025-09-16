@@ -53,7 +53,7 @@ resource "google_vertex_ai_dataset" "placeholder" {
   display_name        = "placeholder-dataset"
   metadata_schema_uri = "gs://google-cloud-aiplatform/schema/dataset/schema-v1/schema.json"
   project             = var.project_id
-  region              = var.region
+  location            = var.region
 }
 
 resource "google_vertex_ai_endpoint" "ml_endpoint" {
