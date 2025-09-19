@@ -1,12 +1,18 @@
 name: Terraform GCP
 
 on:
-  pull_request:
-    branches: [ main ]
-    paths: [ 'infra/**', '.github/workflows/terraform-gcp.yml' ]
   push:
     branches: [ main ]
-    paths: [ 'infra/**', '.github/workflows/terraform-gcp.yml' ]
+    paths:
+      - 'apps/**'
+      - 'infra/**'
+      - '.github/workflows/terraform-gcp.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'apps/**'
+      - 'infra/**'
+      - '.github/workflows/terraform-gcp.yml'
   workflow_dispatch:
 
 permissions:
@@ -126,3 +132,33 @@ jobs:
       - name: Terraform Apply
         working-directory: ${{ matrix.tfdir }}
         run: terraform apply -auto-approve tfplan
+
+
+  build_apps:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [ kaggle-upload] # <--- list of projects
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Auth to GCP (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          token_format: 'access_token'
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Build & Push
+        run: |
+          IMAGE_URI="${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ml-experiments/${{ matrix.app }}:${{ github.sha }}"
+          docker build -t "$IMAGE_URI" "apps/${{ matrix.app }}"
+          docker push "$IMAGE_URI"
+          docker tag "$IMAGE_URI" "${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ml-experiments/${{ matrix.app }}:latest"
+          docker push "${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ml-experiments/${{ matrix.app }}:latest"

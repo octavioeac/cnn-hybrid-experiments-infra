@@ -1,0 +1,26 @@
+[project]
+name = "kaggle-loader"
+version = "0.1.0"
+description = "Download and export datasets from Kaggle to Google Cloud Storage"
+authors = [{ name = "Octavio Esquivel", email = "octavio.avarezdelcastillo@gmail.com" }]
+readme = "README.md"
+requires-python = ">=3.10"
+
+# Runtime dependencies
+dependencies = [
+  "kaggle>=1.6.17",
+  "google-cloud-storage>=2.18.0",
+  "pydantic>=2",
+  "pydantic-settings>=2",
+  "click>=8",
+  "dependency-injector>=4",
+]
+
+# Executable scripts (CLI entrypoints)
+[project.scripts]
+mock-run = "app.main:main"
+
+# Build system configuration
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
