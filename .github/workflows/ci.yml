@@ -160,8 +160,14 @@ jobs:
 
       - name: Build & Push
         run: |
-          IMAGE_URI="$REGION-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ml-experiments/${{ matrix.app }}:${{ github.sha }}"
+          BASE="$REGION-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ml-experiments/${{ matrix.app }}"
+          IMAGE_URI="$BASE:${{ github.sha }}"
+
+          echo "Building and pushing $IMAGE_URI"
+
           docker build -t "$IMAGE_URI" "apps/${{ matrix.app }}"
           docker push "$IMAGE_URI"
-          docker tag "$IMAGE_URI" $REGION-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ml-experiments/${{ matrix.app }}:latest"
-          docker push "$REGION-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ml-experiments/${{ matrix.app }}:latest"
+
+          # tag as latest
+          docker tag "$IMAGE_URI" "$BASE:latest"
+          docker push "$BASE:latest"
