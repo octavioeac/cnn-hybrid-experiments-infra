@@ -175,7 +175,7 @@ jobs:
 
       - name: Build & Push
         run: |
-          BASE="$REGION-docker.pkg.dev/$PROJECT_ID/ml-experiments/${{ matrix.app }}"
+          BASE="$REGION-docker.pkg.dev/$PROJECT_ID/ml-experiments-cnn-hybrid-experiments-infra-us-central1/${{ matrix.app }}"
           IMAGE_URI="$BASE:${{ github.sha }}"
           echo "Building and pushing $IMAGE_URI"
           docker build -t "$IMAGE_URI" "apps/${{ matrix.app }}"
