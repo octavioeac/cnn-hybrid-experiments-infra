@@ -160,7 +160,7 @@ jobs:
 
       - name: Build & Push
         run: |
-          BASE="$REGION-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ml-experiments/${{ matrix.app }}"
+          BASE="$REGION_TEST-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ml-experiments/${{ matrix.app }}"
           IMAGE_URI="$BASE:${{ github.sha }}"
 
           echo "Building and pushing $IMAGE_URI"
