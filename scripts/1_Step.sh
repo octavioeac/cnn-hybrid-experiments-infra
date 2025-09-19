@@ -17,6 +17,8 @@ TF_CI_SA="${TF_CI_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 gcloud config set project "${PROJECT_ID}" >/dev/null
 PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
 
+gcloud config set compute/region us-central1
+
 echo "PROJECT_ID=${PROJECT_ID}"
 echo "PROJECT_NUMBER=${PROJECT_NUMBER}"
 
