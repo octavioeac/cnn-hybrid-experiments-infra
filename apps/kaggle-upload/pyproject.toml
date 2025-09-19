@@ -16,9 +16,12 @@ dependencies = [
   "dependency-injector>=4",
 ]
 
-# Executable scripts (CLI entrypoints)
 [project.scripts]
 mock-run = "app.main:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
 
 # Build system configuration
 [build-system]
