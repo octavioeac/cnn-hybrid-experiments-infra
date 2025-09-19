@@ -152,13 +152,17 @@ jobs:
 
       - uses: google-github-actions/setup-gcloud@v2
 
+      - name: Get region
+        run: echo "REGION=$(gcloud config get-value compute/region)" >> $GITHUB_ENV
+
+
       - name: Configure Docker
-        run: gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev --quiet
+        run: gcloud auth configure-docker $REGION-docker.pkg.dev --quiet
 
       - name: Build & Push
         run: |
-          IMAGE_URI="${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ml-experiments/${{ matrix.app }}:${{ github.sha }}"
+          IMAGE_URI="$REGION-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ml-experiments/${{ matrix.app }}:${{ github.sha }}"
           docker build -t "$IMAGE_URI" "apps/${{ matrix.app }}"
           docker push "$IMAGE_URI"
-          docker tag "$IMAGE_URI" "${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ml-experiments/${{ matrix.app }}:latest"
-          docker push "${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ml-experiments/${{ matrix.app }}:latest"
+          docker tag "$IMAGE_URI" $REGION-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ml-experiments/${{ matrix.app }}:latest"
+          docker push "$REGION-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ml-experiments/${{ matrix.app }}:latest"
