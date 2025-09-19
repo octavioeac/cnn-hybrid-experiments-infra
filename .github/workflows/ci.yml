@@ -155,7 +155,6 @@ jobs:
       - name: Get region
         run: echo "REGION=$(gcloud config get-value compute/region)" >> $GITHUB_ENV
 
-
       - name: Configure Docker
         run: gcloud auth configure-docker $REGION-docker.pkg.dev --quiet
 
