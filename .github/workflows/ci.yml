@@ -152,27 +152,33 @@ jobs:
 
       - uses: google-github-actions/setup-gcloud@v2
 
-      - name: Get region
+      - name: Resolve project & region (with fallbacks)
         run: |
-          REGION=$(gcloud config get-value compute/region)
-          if [ -z "$REGION" ]; then
-            REGION=us-central1 # <-- Set your default region here
+          REGION="$(gcloud config get-value compute/region 2>/dev/null || true)"
+          [ -z "$REGION" ] && REGION="${{ secrets.GCP_REGION }}"
+          PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
+          [ -z "$PROJECT_ID" ] && PROJECT_ID="$(gcloud config get-value project 2>/dev/null || true)"
+          echo "REGION=$REGION" >> "$GITHUB_ENV"
+          echo "PROJECT_ID=$PROJECT_ID" >> "$GITHUB_ENV"
+
+      - name: Sanity check vars
+        run: |
+          echo "REGION=$REGION"
+          echo "PROJECT_ID=$PROJECT_ID"
+          if [ -z "$REGION" ] || [ -z "$PROJECT_ID" ]; then
+            echo "REGION or PROJECT_ID is empty. Set secrets GCP_REGION / GCP_PROJECT_ID or gcloud defaults." >&2
+            exit 1
           fi
-          echo "REGION=$REGION" >> $GITHUB_ENV
 
       - name: Configure Docker
         run: gcloud auth configure-docker $REGION-docker.pkg.dev --quiet
 
       - name: Build & Push
         run: |
-          BASE="$REGION-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ml-experiments/${{ matrix.app }}"
+          BASE="$REGION-docker.pkg.dev/$PROJECT_ID/ml-experiments/${{ matrix.app }}"
           IMAGE_URI="$BASE:${{ github.sha }}"
-
           echo "Building and pushing $IMAGE_URI"
-
           docker build -t "$IMAGE_URI" "apps/${{ matrix.app }}"
           docker push "$IMAGE_URI"
-
-          # tag as latest
           docker tag "$IMAGE_URI" "$BASE:latest"
           docker push "$BASE:latest"
