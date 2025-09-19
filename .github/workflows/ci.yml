@@ -153,7 +153,12 @@ jobs:
       - uses: google-github-actions/setup-gcloud@v2
 
       - name: Get region
-        run: echo "REGION=$(gcloud config get-value compute/region)" >> $GITHUB_ENV
+        run: |
+          REGION=$(gcloud config get-value compute/region)
+          if [ -z "$REGION" ]; then
+            REGION=us-central1 # <-- Set your default region here
+          fi
+          echo "REGION=$REGION" >> $GITHUB_ENV
 
       - name: Configure Docker
         run: gcloud auth configure-docker $REGION-docker.pkg.dev --quiet
